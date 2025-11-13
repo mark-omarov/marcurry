@@ -1,4 +1,3 @@
-import { StatsCard } from '@/components/stats-card';
 import { Flag } from 'lucide-react';
 import { FeaturesTable } from '@/components/feature-usage-table';
 import { ProductSelector } from '@/components/product-selector';
@@ -6,6 +5,7 @@ import { EnvironmentSelector } from '@/components/environment-selector';
 import { CreateProductInline } from '@/components/create-product-inline';
 import { listFeatureFlags, listProducts, listEnvironments } from '@/lib/apiHandlers';
 import { Suspense } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 export default async function Home({
   searchParams,
@@ -30,7 +30,14 @@ export default async function Home({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Overview of your feature flag management</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-muted-foreground">Overview of your feature flag management</p>
+            {products.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {features.length} {features.length === 1 ? 'feature' : 'features'}
+              </Badge>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Suspense fallback={<div className="bg-muted h-10 w-[200px] animate-pulse rounded" />}>
@@ -53,15 +60,7 @@ export default async function Home({
           <CreateProductInline />
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[280px_1fr]">
-          <div className="md:sticky md:top-24 md:self-start">
-            <StatsCard title="Total Features" value={features.length} icon={Flag} />
-          </div>
-
-          <div className="min-w-0">
-            <FeaturesTable features={features} environments={allEnvironments} />
-          </div>
-        </div>
+        <FeaturesTable features={features} environments={allEnvironments} />
       )}
     </div>
   );

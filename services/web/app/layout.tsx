@@ -25,9 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} container mx-auto max-w-7xl antialiased`}>
-        <Navigation />
-        <main className="px-4">{children}</main>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} flex w-full content-center items-center justify-center antialiased`}
+      >
+        <div className="container w-full max-w-7xl">
+          <Navigation />
+          <main className="px-4">{children}</main>
+        </div>
       </body>
     </html>
   );

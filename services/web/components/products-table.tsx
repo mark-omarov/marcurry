@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import type { Product } from '@/lib/adapters/types';
+import type { Product } from '@/lib/db/types';
 import { deleteProductAction } from '@/app/actions/productActions';
 
 export interface ProductRow {
@@ -12,7 +12,13 @@ export interface ProductRow {
   featureCount: number;
 }
 
-export function ProductsTable({ items, actions }: { items: ProductRow[]; actions?: (p: ProductRow) => React.ReactNode }) {
+export function ProductsTable({
+  items,
+  actions,
+}: {
+  items: ProductRow[];
+  actions?: (p: ProductRow) => React.ReactNode;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -41,7 +47,10 @@ export function ProductsTable({ items, actions }: { items: ProductRow[]; actions
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/products/${row.product.id}`}>
-                        <Button size="sm" variant="ghost"><ExternalLink className="mr-1 h-4 w-4" />Open</Button>
+                        <Button size="sm" variant="ghost">
+                          <ExternalLink className="mr-1 h-4 w-4" />
+                          Open
+                        </Button>
                       </Link>
                       {actions ? actions(row) : null}
                       <form
@@ -51,7 +60,8 @@ export function ProductsTable({ items, actions }: { items: ProductRow[]; actions
                         }}
                       >
                         <Button size="sm" variant="ghost" type="submit" className="text-destructive">
-                          <Trash2 className="mr-1 h-4 w-4" />Delete
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          Delete
                         </Button>
                       </form>
                     </div>

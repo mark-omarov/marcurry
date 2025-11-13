@@ -1,27 +1,50 @@
 import { config } from '@/lib/config';
-import { StorageAdapter } from '../adapters/StorageAdapter';
+import { StorageAdapter } from './StorageAdapter';
+
+import Redis from 'ioredis';
 import InMemoryAdapter from '../adapters/InMemoryAdapter';
+import RedisAdapter from '../adapters/RedisAdapter';
 
-let adapterInstance: StorageAdapter | null = null;
+declare global {
+  var dbAdapter: StorageAdapter | undefined;
+  var redisClient: Redis | undefined;
+}
 
-export function initializeAdapter(): StorageAdapter {
-  if (adapterInstance) {
-    return adapterInstance;
-  }
-
+function initializeAdapter(): StorageAdapter {
   const adapterType = config.DATABASE_ADAPTER;
   console.log(`Initializing database adapter: ${adapterType}`);
 
   switch (adapterType) {
+    case 'redis':
+      if (!config.REDIS_URL) {
+        throw new Error('REDIS_URL is required for Redis adapter');
+      }
+
+      if (!global.redisClient) {
+        global.redisClient = new Redis(config.REDIS_URL);
+      }
+      return new RedisAdapter(global.redisClient);
+
     case 'in-memory':
-      adapterInstance = new InMemoryAdapter();
-      break;
+      return new InMemoryAdapter();
+
+    case 'typeorm':
+      throw new Error(`Adapter not yet implemented: ${adapterType}`);
 
     default:
       console.warn(`Unknown DATABASE_ADAPTER: "${adapterType}". Defaulting to in-memory.`);
-      adapterInstance = new InMemoryAdapter();
-      break;
+      return new InMemoryAdapter();
   }
+}
 
-  return adapterInstance;
+export function getDb(): StorageAdapter {
+  if (process.env.NODE_ENV === 'production') {
+    const redis = new Redis(config.REDIS_URL!);
+    return new RedisAdapter(redis);
+  } else {
+    if (!global.dbAdapter) {
+      global.dbAdapter = initializeAdapter();
+    }
+    return global.dbAdapter;
+  }
 }

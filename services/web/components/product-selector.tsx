@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Product } from '@/lib/adapters/types';
+import type { Product } from '@/lib/db/types';
 
 export function ProductSelector({ products }: { products: Product[] }) {
   const router = useRouter();

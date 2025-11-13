@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import type { Environment } from '@/lib/adapters/types';
+import type { Environment } from '@/lib/db/types';
 import { deleteEnvironmentAction } from '@/app/actions/environmentActions';
 
 export interface EnvironmentRow {
@@ -11,7 +11,13 @@ export interface EnvironmentRow {
   featureCount: number;
 }
 
-export function EnvironmentsTable({ items, actions }: { items: EnvironmentRow[]; actions?: (e: EnvironmentRow) => React.ReactNode }) {
+export function EnvironmentsTable({
+  items,
+  actions,
+}: {
+  items: EnvironmentRow[];
+  actions?: (e: EnvironmentRow) => React.ReactNode;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -40,7 +46,10 @@ export function EnvironmentsTable({ items, actions }: { items: EnvironmentRow[];
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/products/${row.environment.productId}/environments/${row.environment.id}`}>
-                        <Button size="sm" variant="ghost"><ExternalLink className="mr-1 h-4 w-4" />Open</Button>
+                        <Button size="sm" variant="ghost">
+                          <ExternalLink className="mr-1 h-4 w-4" />
+                          Open
+                        </Button>
                       </Link>
                       {actions ? actions(row) : null}
                       <form
@@ -50,7 +59,8 @@ export function EnvironmentsTable({ items, actions }: { items: EnvironmentRow[];
                         }}
                       >
                         <Button size="sm" variant="ghost" type="submit" className="text-destructive">
-                          <Trash2 className="mr-1 h-4 w-4" />Delete
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          Delete
                         </Button>
                       </form>
                     </div>

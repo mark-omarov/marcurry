@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { X, Plus } from 'lucide-react';
-import type { Gate } from '@/lib/adapters/types';
+import type { Gate } from '@/lib/db/types';
 
 interface GatesEditorProps {
   initialGates: Gate[];
@@ -17,15 +17,13 @@ type GateType = 'everyone' | 'actors';
 
 export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
   // Determine initial gate type and actors
-  const initialAllGate = initialGates.find(g => g.type === 'all');
-  const initialActorsGate = initialGates.find(g => g.type === 'actors');
+  const initialAllGate = initialGates.find((g) => g.type === 'all');
+  const initialActorsGate = initialGates.find((g) => g.type === 'actors');
 
   const [gateType, setGateType] = useState<GateType>(
     initialAllGate ? 'everyone' : initialActorsGate ? 'actors' : 'everyone'
   );
-  const [actors, setActors] = useState<string[]>(
-    initialActorsGate?.actorIds || []
-  );
+  const [actors, setActors] = useState<string[]>(initialActorsGate?.actorIds || []);
   const [newActorInput, setNewActorInput] = useState('');
 
   // Convert UI state to gates array
@@ -53,7 +51,7 @@ export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
   };
 
   const removeActor = (actorToRemove: string) => {
-    const newActors = actors.filter(a => a !== actorToRemove);
+    const newActors = actors.filter((a) => a !== actorToRemove);
     setActors(newActors);
     onChange?.([{ type: 'actors', actorIds: newActors }]);
   };
@@ -69,19 +67,17 @@ export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
     <div className="space-y-4">
       <div>
         <Label>Access Control</Label>
-        <p className="text-xs text-muted-foreground mt-1">
-          Control who can access this feature
-        </p>
+        <p className="text-muted-foreground mt-1 text-xs">Control who can access this feature</p>
       </div>
 
       <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {/* Gate type selector */}
           <div className="space-y-3">
             <button
               type="button"
               onClick={() => handleGateTypeChange('everyone')}
-              className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
+              className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-colors ${
                 gateType === 'everyone'
                   ? 'border-primary bg-primary/5'
                   : 'border-muted hover:border-muted-foreground/25'
@@ -89,40 +85,34 @@ export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
             >
               <div className="text-left">
                 <div className="font-medium">Everyone</div>
-                <div className="text-xs text-muted-foreground">All users have access to this feature</div>
+                <div className="text-muted-foreground text-xs">All users have access to this feature</div>
               </div>
-              <div className={`h-4 w-4 rounded-full border-2 ${
-                gateType === 'everyone'
-                  ? 'border-primary bg-primary'
-                  : 'border-muted-foreground'
-              }`}>
-                {gateType === 'everyone' && (
-                  <div className="h-full w-full rounded-full bg-background scale-50" />
-                )}
+              <div
+                className={`h-4 w-4 rounded-full border-2 ${
+                  gateType === 'everyone' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                }`}
+              >
+                {gateType === 'everyone' && <div className="bg-background h-full w-full scale-50 rounded-full" />}
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => handleGateTypeChange('actors')}
-              className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
-                gateType === 'actors'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted hover:border-muted-foreground/25'
+              className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-colors ${
+                gateType === 'actors' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/25'
               }`}
             >
               <div className="text-left">
                 <div className="font-medium">Specific Actors</div>
-                <div className="text-xs text-muted-foreground">Only specified actors have access</div>
+                <div className="text-muted-foreground text-xs">Only specified actors have access</div>
               </div>
-              <div className={`h-4 w-4 rounded-full border-2 ${
-                gateType === 'actors'
-                  ? 'border-primary bg-primary'
-                  : 'border-muted-foreground'
-              }`}>
-                {gateType === 'actors' && (
-                  <div className="h-full w-full rounded-full bg-background scale-50" />
-                )}
+              <div
+                className={`h-4 w-4 rounded-full border-2 ${
+                  gateType === 'actors' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                }`}
+              >
+                {gateType === 'actors' && <div className="bg-background h-full w-full scale-50 rounded-full" />}
               </div>
             </button>
           </div>
@@ -137,33 +127,25 @@ export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
                   onChange={(e) => setNewActorInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                 />
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={addActor}
-                  disabled={!newActorInput.trim()}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
+                <Button type="button" size="sm" onClick={addActor} disabled={!newActorInput.trim()}>
+                  <Plus className="mr-1 h-4 w-4" />
                   Add
                 </Button>
               </div>
 
               {actors.length === 0 ? (
-                <div className="text-center py-4 text-sm text-muted-foreground border rounded-lg border-dashed">
+                <div className="text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm">
                   No actors added yet. Add actor IDs above.
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {actors.length} actor{actors.length !== 1 ? 's' : ''} with access:
                   </div>
                   <div className="space-y-1">
                     {actors.map((actor) => (
-                      <div
-                        key={actor}
-                        className="flex items-center justify-between p-2 rounded border bg-muted/30"
-                      >
-                        <span className="text-sm font-mono">{actor}</span>
+                      <div key={actor} className="bg-muted/30 flex items-center justify-between rounded border p-2">
+                        <span className="font-mono text-sm">{actor}</span>
                         <Button
                           type="button"
                           size="sm"

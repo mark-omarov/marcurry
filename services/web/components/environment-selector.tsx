@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Environment } from '@/lib/adapters/types';
+import type { Environment } from '@/lib/db/types';
 
 export function EnvironmentSelector({ environments }: { environments: Environment[] }) {
   const router = useRouter();
@@ -26,10 +26,8 @@ export function EnvironmentSelector({ environments }: { environments: Environmen
   if (environments.length === 0) {
     return (
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-muted-foreground">
-          Environment:
-        </label>
-        <div className="text-sm text-muted-foreground">No environments</div>
+        <label className="text-muted-foreground text-sm font-medium">Environment:</label>
+        <div className="text-muted-foreground text-sm">No environments</div>
       </div>
     );
   }

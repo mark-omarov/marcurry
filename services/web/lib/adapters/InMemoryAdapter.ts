@@ -1,13 +1,6 @@
-import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors } from './types';
-import type { StorageAdapter, NewFeatureFlag } from './StorageAdapter';
-
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function toSnakeCase(input: string): string {
-  return input.replace(/\s+/g, '_').toLowerCase();
-}
+import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors } from '../db/types';
+import type { StorageAdapter, NewFeatureFlag } from '../db/StorageAdapter';
+import { nowIso, toSnakeCase } from '../db/utils';
 
 export class InMemoryAdapter implements StorageAdapter {
   private products = new Map<ID, Product>();

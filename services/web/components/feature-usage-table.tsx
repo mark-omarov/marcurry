@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import type { FeatureFlag, Environment } from '@/lib/adapters/types';
+import type { FeatureFlag, Environment } from '@/lib/db/types';
 
 import { deleteFeature } from '@/app/actions/featureActions';
 
@@ -22,14 +22,14 @@ export function FeaturesTable({
   features,
   environments = [],
   allowDelete = false,
-  actions
+  actions,
 }: {
   features: FeatureFlag[];
   environments?: Environment[];
   allowDelete?: boolean;
   actions?: (f: FeatureFlag) => React.ReactNode;
 }) {
-  const envMap = new Map(environments.map(e => [e.id, e]));
+  const envMap = new Map(environments.map((e) => [e.id, e]));
   return (
     <Card>
       <CardHeader>
@@ -54,17 +54,22 @@ export function FeaturesTable({
               {features.map((feature) => {
                 const env = envMap.get(feature.envId);
                 return (
-                  <TableRow key={feature.id} className="transition-colors hover:bg-muted">
+                  <TableRow key={feature.id} className="hover:bg-muted transition-colors">
                     <TableCell className="font-medium">{feature.label}</TableCell>
                     <TableCell className="text-muted-foreground">{env?.name ?? '-'}</TableCell>
                     <TableCell className="text-muted-foreground">{truncateText(feature.description, 50)}</TableCell>
                     <TableCell>
-                      <Badge variant={feature.enabled ? 'default' : 'secondary'}>{feature.enabled ? 'On' : 'Off'}</Badge>
+                      <Badge variant={feature.enabled ? 'default' : 'secondary'}>
+                        {feature.enabled ? 'On' : 'Off'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Link href={`/features/${feature.id}`}>
-                          <Button size="sm" variant="ghost"><Pencil className="mr-1 h-4 w-4" />Edit</Button>
+                          <Button size="sm" variant="ghost">
+                            <Pencil className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
                         </Link>
                         {actions ? actions(feature) : null}
                         {allowDelete ? (
@@ -75,7 +80,8 @@ export function FeaturesTable({
                             }}
                           >
                             <Button size="sm" variant="ghost" type="submit" className="text-destructive">
-                              <Trash2 className="mr-1 h-4 w-4" />Delete
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              Delete
                             </Button>
                           </form>
                         ) : null}

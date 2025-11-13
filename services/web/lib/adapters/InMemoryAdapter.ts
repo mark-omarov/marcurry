@@ -1,4 +1,4 @@
-import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors, Gate } from './types';
+import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors } from './types';
 import type { StorageAdapter, NewFeatureFlag } from './StorageAdapter';
 import { v4 } from 'uuid';
 

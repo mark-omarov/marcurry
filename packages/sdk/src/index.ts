@@ -1,20 +1,41 @@
+import type { FeatureFlag } from '../../../services/web/lib/adapters/types.js';
+
 export type ClientOptions = {
   product: string;
   environment: string;
-}
+};
 
 export type Client = {
-  enabled(featureFlagKey: string, actorId: string): Promise<boolean>
-}
+  enabledList(actorId: string): Promise<string[]>;
+};
+
+const WEB_SERVICE_URL = process.env.WEB_SERVICE_URL || 'http://localhost:3000';
 
 export function createClient(options: ClientOptions): Client {
-  // TODO: implement connection to APIs
-  console.log(options)
+  async function fetchFromWebService(endpoint: string, params: Record<string, string> = {}): Promise<any> {
+    const url = new URL(`${WEB_SERVICE_URL}${endpoint}`);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from ${url}: ${response.statusText}`);
+    }
+    return response.json();
+  }
 
   return {
-    enabled(featureFlagKey: string, actorId: string): Promise<boolean> {
-      return Promise.resolve(true)
-    }
-  }
+    async enabledList(actorId: string): Promise<string[]> {
+      try {
+        const flags = await fetchFromWebService('/api/enabled_flags', {
+          product: options.product,
+          environment: options.environment,
+          actorId,
+        });
+        return flags.map((flag: FeatureFlag) => flag.id);
+      } catch (error) {
+        console.error('Error fetching enabled flags:', error);
+        return [];
+      }
+    },
+  };
 }
-

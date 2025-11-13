@@ -104,3 +104,8 @@ export async function updateEnvironmentById(id: string, body: { name?: unknown; 
 export async function deleteEnvironmentById(id: string) {
   return adapter.deleteEnvironment(id);
 }
+
+// Enabled Flags
+export async function listEnabledFlags(query: { productId: string; envId: string; actorId: string }) {
+  return adapter.getEnabledFlagsForActor(query.productId, query.envId, query.actorId);
+}

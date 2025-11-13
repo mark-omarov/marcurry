@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
-
-const adapter = getDb();
+import { getProductById, updateProductById, deleteProductById } from '@/lib/apiHandlers';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const p = await adapter.getProduct(params.id);
+  const p = await getProductById(params.id);
   if (!p) return NextResponse.json({ error: 'not found' }, { status: 404 });
   return NextResponse.json(p);
 }
@@ -12,14 +10,15 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const body = await req.json();
-    const updated = await adapter.updateProduct(params.id, { name: body.name, description: body.description });
+    const updated = await updateProductById(params.id, { name: body.name, description: body.description });
     return NextResponse.json(updated);
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? String(err) }, { status: 400 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  await adapter.deleteProduct(params.id);
+  await deleteProductById(params.id);
   return NextResponse.json({}, { status: 204 });
 }

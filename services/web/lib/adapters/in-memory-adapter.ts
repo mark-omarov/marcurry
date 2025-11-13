@@ -1,0 +1,179 @@
+import type { ID, Product, Environment, FeatureFlag, GateAll, GateGroups, GateUsers, Gate } from './types';
+import type { MemoryAdapter } from './memory-adapter';
+
+function createId(prefix = 'id'): ID {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+export class InMemoryAdapter implements MemoryAdapter {
+  private products = new Map<ID, Product>();
+  private environments = new Map<ID, Environment>();
+  private flags = new Map<ID, FeatureFlag>();
+
+  // Optional: a simple group registry to support 'groups' gates.
+  // groupId -> set of userIds
+  private groups = new Map<string, Set<string>>();
+
+  // Products
+  async createProduct(product: Omit<Product, 'id' | 'createdAt'>) {
+    const id = createId('prod');
+    const r: Product = { id, createdAt: nowIso(), ...product };
+    this.products.set(id, r);
+    return r;
+  }
+
+  async getProduct(id: ID) {
+    return this.products.get(id) ?? null;
+  }
+
+  async updateProduct(id: ID, patch: Partial<Omit<Product, 'id' | 'createdAt'>>) {
+    const cur = this.products.get(id);
+    if (!cur) throw new Error(`product not found: ${id}`);
+    const updated = { ...cur, ...patch };
+    this.products.set(id, updated);
+    return updated;
+  }
+
+  async deleteProduct(id: ID) {
+    // also cascade-delete environments and flags for that product
+    for (const [envId, env] of this.environments.entries()) {
+      if (env.productId === id) this.environments.delete(envId);
+    }
+    for (const [flagId, flag] of this.flags.entries()) {
+      if (flag.productId === id) this.flags.delete(flagId);
+    }
+    this.products.delete(id);
+  }
+
+  async listProducts() {
+    return Array.from(this.products.values());
+  }
+
+  // Environments
+  async createEnvironment(env: Omit<Environment, 'id' | 'createdAt'>) {
+    const id = createId('env');
+    const r: Environment = { id, createdAt: nowIso(), ...env };
+    this.environments.set(id, r);
+    return r;
+  }
+
+  async getEnvironment(id: ID) {
+    return this.environments.get(id) ?? null;
+  }
+
+  async updateEnvironment(id: ID, patch: Partial<Omit<Environment, 'id' | 'createdAt'>>) {
+    const cur = this.environments.get(id);
+    if (!cur) throw new Error(`environment not found: ${id}`);
+    const updated = { ...cur, ...patch };
+    this.environments.set(id, updated);
+    return updated;
+  }
+
+  async deleteEnvironment(id: ID) {
+    // cascade delete flags in env
+    for (const [flagId, flag] of this.flags.entries()) {
+      if (flag.envId === id) this.flags.delete(flagId);
+    }
+    this.environments.delete(id);
+  }
+
+  async listEnvironments(productId?: ID) {
+    const all = Array.from(this.environments.values());
+    return typeof productId === 'undefined' ? all : all.filter((e) => e.productId === productId);
+  }
+
+  // FeatureFlags
+  async createFeatureFlag(flag: Omit<FeatureFlag, 'id' | 'createdAt'>) {
+    // basic validation
+    if (!this.products.has(flag.productId)) throw new Error(`product not found: ${flag.productId}`);
+    if (!this.environments.has(flag.envId)) throw new Error(`environment not found: ${flag.envId}`);
+    const id = createId('flag');
+    const r: FeatureFlag = { id, createdAt: nowIso(), ...flag };
+    this.flags.set(id, r);
+    return r;
+  }
+
+  async getFeatureFlag(id: ID) {
+    return this.flags.get(id) ?? null;
+  }
+
+  async updateFeatureFlag(id: ID, patch: Partial<Omit<FeatureFlag, 'id' | 'createdAt'>>) {
+    const cur = this.flags.get(id);
+    if (!cur) throw new Error(`feature flag not found: ${id}`);
+    const updated = { ...cur, ...patch };
+    this.flags.set(id, updated);
+    return updated;
+  }
+
+  async deleteFeatureFlag(id: ID) {
+    this.flags.delete(id);
+  }
+
+  async listFeatureFlags(productId?: ID, envId?: ID) {
+    const all = Array.from(this.flags.values());
+    return all.filter((f) => (productId ? f.productId === productId : true) && (envId ? f.envId === envId : true));
+  }
+
+  // Evaluation
+  async getEnabledFlagsForUser(productId: ID, envId: ID, userId: string) {
+    const flags = await this.listFeatureFlags(productId, envId);
+    const enabled: FeatureFlag[] = [];
+
+    for (const flag of flags) {
+      if (this.flagEnabledForUser(flag, userId)) enabled.push(flag);
+    }
+
+    return enabled;
+  }
+
+  private flagEnabledForUser(flag: FeatureFlag, userId: string) {
+    // If no gates defined -> false
+    if (!flag.gates || flag.gates.length === 0) return false;
+
+    for (const g of flag.gates) {
+      if ((g as Gate).type === 'all') {
+        const ga = g as GateAll;
+        if (ga.enabled) return true;
+      }
+
+      if ((g as Gate).type === 'users') {
+        const gu = g as GateUsers;
+        if (gu.userIds.includes(userId)) return true;
+      }
+
+      if ((g as Gate).type === 'groups') {
+        const gg = g as GateGroups;
+        // groups: check if any group contains this user
+        for (const gid of gg.groupIds) {
+          const members = this.groups.get(gid);
+          if (members && members.has(userId)) return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Optional convenience: group management
+  async createGroup(groupId: string, userIds: string[] = []) {
+    this.groups.set(groupId, new Set(userIds));
+  }
+
+  async addUserToGroup(groupId: string, userId: string) {
+    const s = this.groups.get(groupId) ?? new Set<string>();
+    s.add(userId);
+    this.groups.set(groupId, s);
+  }
+
+  async removeUserFromGroup(groupId: string, userId: string) {
+    const s = this.groups.get(groupId);
+    if (!s) return;
+    s.delete(userId);
+  }
+}
+
+export default InMemoryAdapter;

@@ -8,7 +8,7 @@
     "format:check": "prettier --check . --cache",
     "format:write": "prettier --write . --cache",
     "build": "turbo build",
-    "start:dev": "turbo start:dev",
+    "dev": "turbo dev",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test"

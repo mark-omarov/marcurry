@@ -1,10 +1,18 @@
 packages:
   - services/*
   - packages/*
+
+injectWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
+overrides:
+  '@opentelemetry/api': ^1.9.0
+  '@opentelemetry/core': ^1.25.1
+
+savePrefix: ''
+
 syncInjectedDepsAfterScripts:
   - build
-injectWorkspacePackages: true
-savePrefix: ""
-overrides:
-  '@opentelemetry/api': '^1.9.0'
-  '@opentelemetry/core': '^1.25.1'

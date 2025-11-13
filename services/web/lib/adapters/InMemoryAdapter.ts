@@ -140,12 +140,12 @@ export class InMemoryAdapter implements StorageAdapter {
     if (!flag.gates || flag.gates.length === 0) return false;
 
     for (const g of flag.gates) {
-      if ((g as Gate).type === 'all') {
+      if (g.type === 'all') {
         const ga = g as GateAll;
         if (ga.enabled) return true;
       }
 
-      if ((g as Gate).type === 'actors') {
+      if (g.type === 'actors') {
         const gu = g as GateActors;
         if (gu.actorIds.includes(actorId)) return true;
       }

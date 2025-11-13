@@ -3,7 +3,7 @@ import { z } from 'zod';
 const serverSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   DATABASE_ADAPTER: z.enum(['in-memory', 'redis', 'typeorm']),
-  REDIS_URL: z.string(),
+  REDIS_URL: z.string().optional(),
 });
 
 const clientSchema = z.object({

@@ -10,11 +10,16 @@ import { deleteEnvironmentAction, updateEnvironmentAction } from '@/app/actions/
 import { useToast } from '@/components/ui/toast';
 import type { Environment } from '@/lib/db/types';
 import { tryCatch } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export function EditEnvironmentForm({ environment }: { environment: Environment }) {
+  const router = useRouter();
+
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { showToast } = useToast();
+
+  const backUrl = `/products/${environment.productId}`;
 
   async function handleUpdate(formData: FormData) {
     setSubmitting(true);
@@ -33,6 +38,7 @@ export function EditEnvironmentForm({ environment }: { environment: Environment 
     setDeleting(true);
     const [error] = await tryCatch(deleteEnvironmentAction(environment.id));
     setDeleting(false);
+    router.push(backUrl);
 
     if (error) {
       showToast('Error deleting environment', 'error');

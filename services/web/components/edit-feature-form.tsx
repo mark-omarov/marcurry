@@ -30,24 +30,25 @@ export function EditFeatureForm({ feature }: { feature: FeatureFlag }) {
     router.push(backUrl);
 
     if (error) {
-      showToast('Error updating feature', 'error');
+      showToast('Error updating feature flag', 'error');
       return;
     }
 
-    showToast('Feature updated successfully');
+    showToast('Feature flag updated successfully');
   }
 
   async function handleDelete() {
     setDeleting(true);
     const [error] = await tryCatch(deleteFeature(feature.id));
     setDeleting(false);
+    router.push(backUrl);
 
     if (error) {
-      showToast('Error deleting feature', 'error');
+      showToast('Error deleting feature flag', 'error');
       return;
     }
 
-    showToast('Feature deleted successfully');
+    showToast('Feature flag deleted successfully');
   }
 
   return (

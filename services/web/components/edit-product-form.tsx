@@ -10,11 +10,16 @@ import { deleteProductAction, updateProductAction } from '@/app/actions/productA
 import { useToast } from '@/components/ui/toast';
 import type { Product } from '@/lib/db/types';
 import { tryCatch } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export function EditProductForm({ product }: { product: Product }) {
+  const router = useRouter();
+
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { showToast } = useToast();
+
+  const backUrl = '/';
 
   async function handleUpdate(formData: FormData) {
     setSubmitting(true);
@@ -33,6 +38,7 @@ export function EditProductForm({ product }: { product: Product }) {
     setDeleting(true);
     const [error] = await tryCatch(deleteProductAction(product.id));
     setDeleting(false);
+    router.push(backUrl);
 
     if (error) {
       showToast('Error deleting product', 'error');

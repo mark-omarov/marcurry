@@ -12,6 +12,7 @@ import { deleteFeature, updateFeature } from '@/app/actions/featureActions';
 import { useToast } from '@/components/ui/toast';
 import type { FeatureFlag } from '@/lib/db/types';
 import { useRouter } from 'next/navigation';
+import { tryCatch } from '@/lib/utils';
 
 export function EditFeatureForm({ feature }: { feature: FeatureFlag }) {
   const router = useRouter();
@@ -24,23 +25,29 @@ export function EditFeatureForm({ feature }: { feature: FeatureFlag }) {
 
   async function handleUpdate(formData: FormData) {
     setSubmitting(true);
-    try {
-      await updateFeature(formData);
-      showToast('Feature updated successfully');
-    } finally {
-      setSubmitting(false);
-      router.push(backUrl);
+    const [error] = await tryCatch(updateFeature(formData));
+    setSubmitting(false);
+    router.push(backUrl);
+
+    if (error) {
+      showToast('Error updating feature', 'error');
+      return;
     }
+
+    showToast('Feature updated successfully');
   }
 
   async function handleDelete() {
     setDeleting(true);
-    try {
-      await deleteFeature(feature.id);
-      showToast('Feature deleted successfully');
-    } finally {
-      setDeleting(false);
+    const [error] = await tryCatch(deleteFeature(feature.id));
+    setDeleting(false);
+
+    if (error) {
+      showToast('Error deleting feature', 'error');
+      return;
     }
+
+    showToast('Feature deleted successfully');
   }
 
   return (

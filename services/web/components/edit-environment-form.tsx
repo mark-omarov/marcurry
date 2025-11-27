@@ -9,6 +9,7 @@ import { Save, Trash2 } from 'lucide-react';
 import { deleteEnvironmentAction, updateEnvironmentAction } from '@/app/actions/environmentActions';
 import { useToast } from '@/components/ui/toast';
 import type { Environment } from '@/lib/db/types';
+import { tryCatch } from '@/lib/utils';
 
 export function EditEnvironmentForm({ environment }: { environment: Environment }) {
   const [submitting, setSubmitting] = useState(false);
@@ -17,22 +18,28 @@ export function EditEnvironmentForm({ environment }: { environment: Environment 
 
   async function handleUpdate(formData: FormData) {
     setSubmitting(true);
-    try {
-      await updateEnvironmentAction(formData);
-      showToast('Environment updated successfully');
-    } finally {
-      setSubmitting(false);
+    const [error] = await tryCatch(updateEnvironmentAction(formData));
+    setSubmitting(false);
+
+    if (error) {
+      showToast('Error updating environment', 'error');
+      return;
     }
+
+    showToast('Environment updated successfully');
   }
 
   async function handleDelete() {
     setDeleting(true);
-    try {
-      await deleteEnvironmentAction(environment.id);
-      showToast('Environment deleted successfully');
-    } finally {
-      setDeleting(false);
+    const [error] = await tryCatch(deleteEnvironmentAction(environment.id));
+    setDeleting(false);
+
+    if (error) {
+      showToast('Error deleting environment', 'error');
+      return;
     }
+
+    showToast('Environment deleted successfully');
   }
 
   return (

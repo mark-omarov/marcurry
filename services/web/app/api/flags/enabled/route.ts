@@ -1,3 +1,4 @@
+import { listEnabledFlags } from '@/lib/apiHandlers/flags';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
@@ -17,7 +18,4 @@ export async function GET(req: Request) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-function listEnabledFlags(arg0: { productId: string; envId: string; actorId: string }) {
-  throw new Error('Function not implemented.');
 }

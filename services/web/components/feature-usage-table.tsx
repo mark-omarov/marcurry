@@ -53,7 +53,9 @@ export function FeaturesTable({
                 return (
                   <TableRow key={feature.id} className="hover:bg-muted transition-colors">
                     <TableCell className="font-medium">
-                      <Link href={`products/${feature.productId}/environments/${feature.envId}/features/${feature.id}`}>
+                      <Link
+                        href={`/products/${feature.productId}/environments/${feature.envId}/features/${feature.id}`}
+                      >
                         <Button className="px-0" size="sm" variant="ghost">
                           {feature.label}
                         </Button>
@@ -70,7 +72,7 @@ export function FeaturesTable({
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Link
-                          href={`products/${feature.productId}/environments/${feature.envId}/features/${feature.id}`}
+                          href={`/products/${feature.productId}/environments/${feature.envId}/features/${feature.id}`}
                         >
                           <Button size="sm" variant="ghost">
                             <Pencil className="mr-1 h-4 w-4" />

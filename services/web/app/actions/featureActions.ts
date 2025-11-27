@@ -12,7 +12,6 @@ import {
   updateFeatureFlagById,
 } from '@/lib/apiHandlers';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 async function ensureDefaultProductAndEnv() {
   const products = await listProducts();
@@ -76,7 +75,6 @@ export async function deleteFeature(id: string) {
     revalidatePath(`/products/${f.productId}`);
     revalidatePath(`/products/${f.productId}/environments/${f.envId}`);
   }
-  redirect('/products');
 }
 
 export async function updateFeature(formData: FormData) {

@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
-import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors } from '../db/types';
-import type { StorageAdapter, NewFeatureFlag } from '../db/StorageAdapter';
+import type { Environment, FeatureFlag, GateActors, GateAll, ID, Product } from '../db/types';
+import type { NewFeatureFlag, StorageAdapter } from '../db/StorageAdapter';
 import { nowIso, toSnakeCase } from '../db/utils';
 
 const H_PRODUCTS = 'products';
@@ -26,12 +26,12 @@ export class RedisAdapter implements StorageAdapter {
     return data ? (JSON.parse(data) as Product) : null;
   }
 
-  async updateProduct(id: ID, patch: Partial<Omit<Product, 'id' | 'createdAt'>>) {
+  async updateProduct(id: ID, patch: Partial<Omit<Product, 'id' | 'name' | 'createdAt'>>) {
     const data = await this.redis.hget(H_PRODUCTS, id);
     if (!data) throw new Error(`product not found: ${id}`);
 
     const cur = JSON.parse(data) as Product;
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
 
     await this.redis.hset(H_PRODUCTS, id, JSON.stringify(updated));
     return updated;
@@ -73,12 +73,12 @@ export class RedisAdapter implements StorageAdapter {
     return data ? (JSON.parse(data) as Environment) : null;
   }
 
-  async updateEnvironment(id: ID, patch: Partial<Omit<Environment, 'id' | 'createdAt'>>) {
+  async updateEnvironment(id: ID, patch: Partial<Omit<Environment, 'id' | 'name' | 'createdAt'>>) {
     const data = await this.redis.hget(H_ENVIRONMENTS, id);
     if (!data) throw new Error(`environment not found: ${id}`);
 
     const cur = JSON.parse(data) as Environment;
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
 
     await this.redis.hset(H_ENVIRONMENTS, id, JSON.stringify(updated));
     return updated;
@@ -140,13 +140,14 @@ export class RedisAdapter implements StorageAdapter {
     return data ? (JSON.parse(data) as FeatureFlag) : null;
   }
 
-  async updateFeatureFlag(id: ID, patch: Partial<Omit<FeatureFlag, 'id' | 'createdAt'>>) {
+  async updateFeatureFlag(id: ID, patch: Partial<Omit<FeatureFlag, 'id' | 'name' | 'createdAt'>>) {
     const data = await this.redis.hget(H_FLAGS, id);
     if (!data) throw new Error(`feature flag not found: ${id}`);
 
     const cur = JSON.parse(data) as FeatureFlag;
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
 
+    console.log(updated);
     await this.redis.hset(H_FLAGS, id, JSON.stringify(updated));
     return updated;
   }

@@ -1,5 +1,5 @@
-import type { ID, Product, Environment, FeatureFlag, GateAll, GateActors } from '../db/types';
-import type { StorageAdapter, NewFeatureFlag } from '../db/StorageAdapter';
+import type { Environment, FeatureFlag, GateActors, GateAll, ID, Product } from '../db/types';
+import type { NewFeatureFlag, StorageAdapter } from '../db/StorageAdapter';
 import { nowIso, toSnakeCase } from '../db/utils';
 
 export class InMemoryAdapter implements StorageAdapter {
@@ -18,10 +18,10 @@ export class InMemoryAdapter implements StorageAdapter {
     return this.products.get(id) ?? null;
   }
 
-  async updateProduct(id: ID, patch: Partial<Omit<Product, 'id' | 'createdAt'>>) {
+  async updateProduct(id: ID, patch: Partial<Omit<Product, 'id' | 'name' | 'createdAt'>>) {
     const cur = this.products.get(id);
     if (!cur) throw new Error(`product not found: ${id}`);
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
     this.products.set(id, updated);
     return updated;
   }
@@ -55,10 +55,10 @@ export class InMemoryAdapter implements StorageAdapter {
     return this.environments.get(id) ?? null;
   }
 
-  async updateEnvironment(id: ID, patch: Partial<Omit<Environment, 'id' | 'createdAt'>>) {
+  async updateEnvironment(id: ID, patch: Partial<Omit<Environment, 'id' | 'name' | 'createdAt'>>) {
     const cur = this.environments.get(id);
     if (!cur) throw new Error(`environment not found: ${id}`);
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
     this.environments.set(id, updated);
     return updated;
   }
@@ -103,10 +103,11 @@ export class InMemoryAdapter implements StorageAdapter {
     return this.flags.get(id) ?? null;
   }
 
-  async updateFeatureFlag(id: ID, patch: Partial<Omit<FeatureFlag, 'id' | 'createdAt'>>) {
+  async updateFeatureFlag(id: ID, patch: Partial<Omit<FeatureFlag, 'id' | 'name' | 'createdAt'>>) {
     const cur = this.flags.get(id);
     if (!cur) throw new Error(`feature flag not found: ${id}`);
-    const updated = { ...cur, ...patch };
+    const updated = { ...cur, description: patch.description ?? cur.description };
+    console.log(updated);
     this.flags.set(id, updated);
     return updated;
   }

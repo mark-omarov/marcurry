@@ -65,7 +65,9 @@ export function FeaturesTable({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/features/${feature.id}`}>
+                        <Link
+                          href={`products/${feature.productId}/environments/${feature.envId}/features/${feature.id}`}
+                        >
                           <Button size="sm" variant="ghost">
                             <Pencil className="mr-1 h-4 w-4" />
                             Edit

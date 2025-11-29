@@ -1,20 +1,19 @@
 import { ProductsTable, type ProductRow } from '@/components/products-table';
-import { CreateProductInline } from '@/components/create-product-inline';
+import { CreateProjectInline } from '@/components/create-project-inline';
 import { EditProductDialog } from '@/components/edit-product-dialog';
+import { listProjectsAction, listEnvironmentsAction, listFlagsAction } from '@/app/actions';
+import type { Project } from '@marcurry/core';
 
 export default async function ProductsPage() {
-  const products = await listProducts();
+  const products: Project[] = await listProjectsAction();
 
   const rows: ProductRow[] = await Promise.all(
     products.map(async (product) => {
-      const [envs, feats] = await Promise.all([
-        listEnvironments({ productId: product.id }),
-        listFeatures({ productId: product.id }),
-      ]);
+      const [envs, flags] = await Promise.all([listEnvironmentsAction(product.id), listFlagsAction(product.id)]);
       return {
         product,
         envCount: envs.length,
-        featureCount: feats.length,
+        flagCount: flags.length,
       } satisfies ProductRow;
     })
   );
@@ -24,11 +23,11 @@ export default async function ProductsPage() {
       <div className="mb-6 flex min-h-12 items-center justify-between">
         <div>
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-muted-foreground">Manage your products</p>
+            <p className="text-muted-foreground">Manage your projects</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <CreateProductInline />
+          <CreateProjectInline />
         </div>
       </div>
 

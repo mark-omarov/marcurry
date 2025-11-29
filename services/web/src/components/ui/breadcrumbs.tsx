@@ -6,7 +6,7 @@ import { Fragment } from 'react';
 export interface BreadcrumbItem {
   label: string;
   href?: string;
-  type?: 'home' | 'product' | 'environment' | 'feature';
+  type?: 'home' | 'project' | 'environment' | 'flag';
 }
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
@@ -48,11 +48,11 @@ function getIcon(type?: BreadcrumbItem['type']) {
   switch (type) {
     case 'home':
       return Home;
-    case 'product':
+    case 'project':
       return Boxes;
     case 'environment':
       return Layers;
-    case 'feature':
+    case 'flag':
       return ToggleRight;
     default:
       return null;

@@ -5,58 +5,224 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { X, Plus } from 'lucide-react';
-import type { Gate } from '@/lib/db/types';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import type { Gate, FlagValueType } from '@marcurry/core';
 
 interface GatesEditorProps {
   initialGates: Gate[];
+  valueType: FlagValueType;
   onChange?: (gates: Gate[]) => void;
+  onValidationChange?: (isValid: boolean, error?: string) => void;
 }
 
-type GateType = 'everyone' | 'actors';
+export function GatesEditor({ initialGates, valueType, onChange, onValidationChange }: GatesEditorProps) {
+  const [gates, setGates] = useState<Gate[]>(initialGates);
 
-export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
-  // Determine initial gate type and actors
-  const initialAllGate = initialGates.find((g) => g.type === 'all');
-  const initialActorsGate = initialGates.find((g) => g.type === 'actors');
+  const validateGates = (gatesToValidate: Gate[]): { isValid: boolean; error?: string } => {
+    // Check if any actors gate has empty actorIds
+    const invalidActorsGate = gatesToValidate.find(
+      (gate) => gate.type === 'actors' && (!gate.actorIds || gate.actorIds.length === 0)
+    );
 
-  const [gateType, setGateType] = useState<GateType>(
-    initialAllGate ? 'everyone' : initialActorsGate ? 'actors' : 'everyone'
-  );
-  const [actors, setActors] = useState<string[]>(initialActorsGate?.actorIds || []);
-  const [newActorInput, setNewActorInput] = useState('');
-
-  // Convert UI state to gates array
-  const getGatesFromState = (): Gate[] => {
-    if (gateType === 'everyone') {
-      return [{ type: 'all', enabled: true }];
-    } else {
-      return [{ type: 'actors', actorIds: actors }];
+    if (invalidActorsGate) {
+      return { isValid: false, error: 'Actors gates must have at least one actor ID' };
     }
+
+    return { isValid: true };
   };
 
-  const handleGateTypeChange = (type: GateType) => {
-    setGateType(type);
-    onChange?.(type === 'everyone' ? [{ type: 'all', enabled: true }] : [{ type: 'actors', actorIds: actors }]);
+  const updateGates = (newGates: Gate[]) => {
+    setGates(newGates);
+    onChange?.(newGates);
+
+    // Validate and notify parent
+    const validation = validateGates(newGates);
+    onValidationChange?.(validation.isValid, validation.error);
   };
+
+  const addGate = () => {
+    const newGate: Gate = {
+      id: crypto.randomUUID(),
+      type: 'boolean',
+      enabled: true,
+      value: getDefaultValue(valueType),
+    } as Gate;
+    updateGates([...gates, newGate]);
+  };
+
+  const removeGate = (index: number) => {
+    updateGates(gates.filter((_, i) => i !== index));
+  };
+
+  const moveGateUp = (index: number) => {
+    if (index === 0) return;
+    const newGates = [...gates];
+    [newGates[index - 1], newGates[index]] = [newGates[index], newGates[index - 1]];
+    updateGates(newGates);
+  };
+
+  const moveGateDown = (index: number) => {
+    if (index === gates.length - 1) return;
+    const newGates = [...gates];
+    [newGates[index], newGates[index + 1]] = [newGates[index + 1], newGates[index]];
+    updateGates(newGates);
+  };
+
+  const updateGate = (index: number, updates: Partial<Gate>) => {
+    const newGates = gates.map((gate, i) => {
+      if (i !== index) return gate;
+      const updated = { ...gate, ...updates };
+      // When changing type, ensure proper shape
+      if (updates.type === 'actors' && gate.type !== 'actors') {
+        return { ...updated, actorIds: [] } as Gate;
+      }
+      if (updates.type === 'boolean' && gate.type !== 'boolean') {
+        const { actorIds, ...rest } = updated as any;
+        return rest as Gate;
+      }
+      return updated;
+    });
+    updateGates(newGates);
+  };
+
+  const updateActorIds = (index: number, actorIds: string[]) => {
+    const newGates = gates.map((gate, i) => {
+      if (i !== index) return gate;
+      return { ...gate, actorIds } as Gate;
+    });
+    updateGates(newGates);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label>Gates</Label>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Control access with multiple gates. Gates are evaluated in order (top to bottom).
+          </p>
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={addGate}>
+          <Plus className="mr-1 h-4 w-4" /> Add Gate
+        </Button>
+      </div>
+
+      {gates.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-muted-foreground text-sm">No gates configured. Add a gate to get started.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-2">
+          {gates.map((gate, index) => (
+            <Card key={gate.id} className="relative">
+              <CardContent className="space-y-4 pt-6">
+                {/* Gate header with controls */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-xs font-medium">Gate #{index + 1}</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => moveGateUp(index)}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => moveGateDown(index)}
+                        disabled={index === gates.length - 1}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0"
+                    onClick={() => removeGate(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Enabled toggle */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`gate-${index}-enabled`}>Enabled</Label>
+                  <Switch
+                    id={`gate-${index}-enabled`}
+                    checked={gate.enabled}
+                    onCheckedChange={(checked) => updateGate(index, { enabled: checked })}
+                  />
+                </div>
+
+                {/* Gate type selector */}
+                <div className="space-y-2">
+                  <Label htmlFor={`gate-${index}-type`}>Type</Label>
+                  <Select
+                    value={gate.type}
+                    onValueChange={(type) => updateGate(index, { type: type as 'boolean' | 'actors' })}
+                  >
+                    <SelectTrigger id={`gate-${index}-type`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boolean">Boolean (all users)</SelectItem>
+                      <SelectItem value="actors">Actors (specific users)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Actor IDs input (only for actors type) */}
+                {gate.type === 'actors' && (
+                  <ActorIdsInput
+                    actorIds={gate.actorIds || []}
+                    onChange={(actorIds) => updateActorIds(index, actorIds)}
+                  />
+                )}
+
+                {/* Value input */}
+                <div className="space-y-2">
+                  <Label htmlFor={`gate-${index}-value`}>Value to Return</Label>
+                  {renderValueInput(gate, index, valueType, (value) => updateGate(index, { value }))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActorIdsInput({ actorIds, onChange }: { actorIds: string[]; onChange: (ids: string[]) => void }) {
+  const [newActorId, setNewActorId] = useState('');
 
   const addActor = () => {
-    const trimmed = newActorInput.trim();
-    if (trimmed && !actors.includes(trimmed)) {
-      const newActors = [...actors, trimmed];
-      setActors(newActors);
-      setNewActorInput('');
-      onChange?.([{ type: 'actors', actorIds: newActors }]);
+    const trimmed = newActorId.trim();
+    if (trimmed && !actorIds.includes(trimmed)) {
+      onChange([...actorIds, trimmed]);
+      setNewActorId('');
     }
   };
 
-  const removeActor = (actorToRemove: string) => {
-    const newActors = actors.filter((a) => a !== actorToRemove);
-    setActors(newActors);
-    onChange?.([{ type: 'actors', actorIds: newActors }]);
+  const removeActor = (id: string) => {
+    onChange(actorIds.filter((a) => a !== id));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addActor();
@@ -64,109 +230,101 @@ export function GatesEditor({ initialGates, onChange }: GatesEditorProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label>Access Control</Label>
-        <p className="text-muted-foreground mt-1 text-xs">Control who can access this feature</p>
+    <div className="space-y-2">
+      <Label>Actor IDs</Label>
+      <div className="flex gap-2">
+        <Input
+          placeholder="user-123, org-456, etc."
+          value={newActorId}
+          onChange={(e) => setNewActorId(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <Button type="button" size="sm" onClick={addActor}>
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
-
-      <Card>
-        <CardContent className="space-y-4 pt-6">
-          {/* Gate type selector */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => handleGateTypeChange('everyone')}
-              className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-colors ${
-                gateType === 'everyone'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted hover:border-muted-foreground/25'
-              }`}
-            >
-              <div className="text-left">
-                <div className="font-medium">Everyone</div>
-                <div className="text-muted-foreground text-xs">All users have access to this feature</div>
-              </div>
-              <div
-                className={`h-4 w-4 rounded-full border-2 ${
-                  gateType === 'everyone' ? 'border-primary bg-primary' : 'border-muted-foreground'
-                }`}
+      {actorIds.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {actorIds.map((id) => (
+            <div key={id} className="bg-muted flex items-center gap-1 rounded px-2 py-1 text-sm">
+              <span>{id}</span>
+              <button
+                type="button"
+                onClick={() => removeActor(id)}
+                className="text-muted-foreground hover:text-foreground"
               >
-                {gateType === 'everyone' && <div className="bg-background h-full w-full scale-50 rounded-full" />}
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleGateTypeChange('actors')}
-              className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-colors ${
-                gateType === 'actors' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/25'
-              }`}
-            >
-              <div className="text-left">
-                <div className="font-medium">Specific Actors</div>
-                <div className="text-muted-foreground text-xs">Only specified actors have access</div>
-              </div>
-              <div
-                className={`h-4 w-4 rounded-full border-2 ${
-                  gateType === 'actors' ? 'border-primary bg-primary' : 'border-muted-foreground'
-                }`}
-              >
-                {gateType === 'actors' && <div className="bg-background h-full w-full scale-50 rounded-full" />}
-              </div>
-            </button>
-          </div>
-
-          {/* Actors list */}
-          {gateType === 'actors' && (
-            <div className="space-y-3 pt-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter actor ID (e.g., user-123)"
-                  value={newActorInput}
-                  onChange={(e) => setNewActorInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <Button type="button" size="sm" onClick={addActor} disabled={!newActorInput.trim()}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-
-              {actors.length === 0 ? (
-                <div className="text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm">
-                  No actors added yet. Add actor IDs above.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-muted-foreground text-xs">
-                    {actors.length} actor{actors.length !== 1 ? 's' : ''} with access:
-                  </div>
-                  <div className="space-y-1">
-                    {actors.map((actor) => (
-                      <div key={actor} className="bg-muted/30 flex items-center justify-between rounded border p-2">
-                        <span className="font-mono text-sm">{actor}</span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeActor(actor)}
-                          className="text-destructive h-7 w-7 p-0"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                <X className="h-3 w-3" />
+              </button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Hidden input to submit gates as JSON */}
-      <input type="hidden" name="gates" value={JSON.stringify(getGatesFromState())} />
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+function renderValueInput(gate: Gate, index: number, valueType: FlagValueType, onChange: (value: any) => void) {
+  const id = `gate-${index}-value`;
+
+  switch (valueType) {
+    case 'boolean':
+      return (
+        <Select value={gate.value ? 'true' : 'false'} onValueChange={(v) => onChange(v === 'true')}>
+          <SelectTrigger id={id}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="true">True</SelectItem>
+            <SelectItem value="false">False</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    case 'string':
+      return (
+        <Input
+          id={id}
+          value={String(gate.value)}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter string value"
+        />
+      );
+    case 'number':
+      return (
+        <Input
+          id={id}
+          type="number"
+          value={String(gate.value)}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          placeholder="0"
+        />
+      );
+    case 'json':
+      return (
+        <Input
+          id={id}
+          value={typeof gate.value === 'string' ? gate.value : JSON.stringify(gate.value)}
+          onChange={(e) => {
+            try {
+              onChange(JSON.parse(e.target.value));
+            } catch {
+              onChange(e.target.value);
+            }
+          }}
+          placeholder='{"key": "value"}'
+        />
+      );
+  }
+}
+
+function getDefaultValue(valueType: FlagValueType): any {
+  switch (valueType) {
+    case 'boolean':
+      return true;
+    case 'string':
+      return '';
+    case 'number':
+      return 0;
+    case 'json':
+      return {};
+  }
 }

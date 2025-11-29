@@ -11,7 +11,7 @@ export function Navigation(props: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
   const navItems = [
     { href: '/', label: 'Feature Flags', icon: ToggleRight },
-    { href: '/products', label: 'Products', icon: Boxes },
+    { href: '/products', label: 'Projects', icon: Boxes },
   ];
 
   return (

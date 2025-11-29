@@ -1,4 +1,3 @@
-// evaluation/gate-matcher.ts
 import type { Gate, Actor } from '../types/value-objects.js';
 
 /**

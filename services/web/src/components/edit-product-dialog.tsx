@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,18 +13,28 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+// Textarea kept if needed later, but not in use now
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
-import { updateProductAction } from '@/app/actions/productActions';
+import { updateProjectAction } from '@/app/actions/projects';
 import {
   createEnvironmentAction,
   deleteEnvironmentAction,
   updateEnvironmentAction,
   listEnvironmentsAction,
-} from '@/app/actions/environmentActions';
+} from '@/app/actions/environments';
+import type { Project, Environment } from '@marcurry/core';
 
-export function EditProductDialog({ product }: { product: Product }) {
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+export function EditProductDialog({ product }: { product: Project }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [envs, setEnvs] = useState<Environment[] | null>(null);
@@ -54,8 +64,10 @@ export function EditProductDialog({ product }: { product: Product }) {
   async function saveProduct(formData: FormData) {
     setSaving(true);
     try {
-      await updateProductAction(formData);
-      showToast('Product updated');
+      const id = String(formData.get('id') || '');
+      const name = String(formData.get('name') || '').trim();
+      await updateProjectAction(id, { name });
+      showToast('Project updated');
     } finally {
       setSaving(false);
     }
@@ -64,11 +76,15 @@ export function EditProductDialog({ product }: { product: Product }) {
   async function addEnv(ev: FormData) {
     setSaving(true);
     try {
-      await createEnvironmentAction(ev);
-      // refresh envs
-      const data = await listEnvironmentsAction(product.id);
-      setEnvs(data);
-      showToast('Environment added');
+      const name = String(ev.get('name') || '').trim();
+      const key = String(ev.get('key') || '').trim();
+      if (name && key) {
+        await createEnvironmentAction({ projectId: product.id, name, key });
+        // refresh envs
+        const data = await listEnvironmentsAction(product.id);
+        setEnvs(data);
+        showToast('Environment added');
+      }
     } finally {
       setSaving(false);
     }
@@ -77,7 +93,13 @@ export function EditProductDialog({ product }: { product: Product }) {
   async function updateEnv(ev: FormData) {
     setSaving(true);
     try {
-      await updateEnvironmentAction(ev);
+      const id = String(ev.get('id') || '');
+      const name = String(ev.get('name') || '').trim();
+      const key = String(ev.get('key') || '').trim();
+      const updates: { name?: string; key?: string } = {};
+      if (name) updates.name = name;
+      if (key) updates.key = key;
+      await updateEnvironmentAction(id, product.id, updates);
       const data = await listEnvironmentsAction(product.id);
       setEnvs(data);
       showToast('Environment updated');
@@ -89,7 +111,7 @@ export function EditProductDialog({ product }: { product: Product }) {
   async function removeEnv(id: string) {
     setSaving(true);
     try {
-      await deleteEnvironmentAction(id);
+      await deleteEnvironmentAction(id, product.id);
       const data = await listEnvironmentsAction(product.id);
       setEnvs(data);
       showToast('Environment removed');
@@ -107,8 +129,8 @@ export function EditProductDialog({ product }: { product: Product }) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Product</DialogTitle>
-          <DialogDescription>Update product info and manage environments</DialogDescription>
+          <DialogTitle>Edit Project</DialogTitle>
+          <DialogDescription>Update project info and manage environments</DialogDescription>
         </DialogHeader>
 
         {/* Product info */}
@@ -116,12 +138,9 @@ export function EditProductDialog({ product }: { product: Product }) {
           <input type="hidden" name="id" value={product.id} />
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue={product.name} disabled />
+            <Input id="name" name="name" defaultValue={product.name} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" name="description" defaultValue={product.description ?? ''} />
-          </div>
+          {/* Description is not part of the core Project model; keeping the field for future use but not persisted */}
           <div className="flex justify-end">
             <Button type="submit" disabled={saving}>
               {saving ? 'Saving...' : 'Save'}
@@ -134,23 +153,20 @@ export function EditProductDialog({ product }: { product: Product }) {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">Environments</div>
-              <div className="text-muted-foreground text-xs">Add or edit environments for this product</div>
+              <div className="text-muted-foreground text-xs">Add or edit environments for this project</div>
             </div>
           </div>
 
           {/* Add environment */}
           <form action={addEnv} className="grid gap-3 rounded border p-3 md:grid-cols-[1fr_1fr_auto]">
-            <input type="hidden" name="productId" value={product.id} />
             <div className="flex-1 space-y-1">
               <Label htmlFor="new-env-name">Name</Label>
-              <Input id="new-env-name" name="name" placeholder="Prod / Staging / Dev" required />
-              {/* Reserve space for helper/error text to keep row height stable */}
+              <Input id="new-env-name" name="name" placeholder="Production" required />
               <div className="min-h-[18px]" />
             </div>
             <div className="flex-1 space-y-1">
-              <Label htmlFor="new-env-desc">Description</Label>
-              <Input id="new-env-desc" name="description" placeholder="Optional" />
-              {/* Reserve space for helper/error text to keep row height stable */}
+              <Label htmlFor="new-env-key">Key</Label>
+              <Input id="new-env-key" name="key" placeholder="production" required />
               <div className="min-h-[18px]" />
             </div>
             <div className="self-start md:mt-6">
@@ -166,40 +182,41 @@ export function EditProductDialog({ product }: { product: Product }) {
             {!loadingEnvs && (envs?.length ?? 0) === 0 && (
               <div className="text-muted-foreground text-sm">No environments yet.</div>
             )}
-            {envs?.map((e) => (
-              <div key={e.id} className="grid gap-3 rounded border p-3 md:grid-cols-[1fr_auto]">
-                <form action={updateEnv} className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
-                  <input type="hidden" name="id" value={e.id} />
-                  <div className="flex-1 space-y-1">
-                    <Label>Name</Label>
-                    <Input value={e.name} disabled readOnly />
-                    {/* Reserve space for helper/error text to keep row height stable */}
-                    <div className="min-h-[18px]" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Label>Description</Label>
-                    <Input name="description" defaultValue={e.description ?? ''} />
-                    {/* Reserve space for helper/error text to keep row height stable */}
-                    <div className="min-h-[18px]" />
-                  </div>
-                  <div className="self-start md:mt-6">
-                    <Button type="submit" className="h-10" variant="outline" disabled={saving}>
-                      Save
-                    </Button>
-                  </div>
-                </form>
-                <form
-                  action={async () => {
-                    await removeEnv(e.id);
-                  }}
-                  className="self-start md:mt-6"
-                >
-                  <Button type="submit" className="h-10" variant="destructive" disabled={saving}>
-                    <Trash2 className="mr-1 h-4 w-4" /> Remove
-                  </Button>
-                </form>
-              </div>
-            ))}
+            {envs?.map((e) => {
+              const isLastEnv = (envs?.length ?? 0) <= 1;
+              return (
+                <div key={e.id} className="grid gap-3 rounded border p-3">
+                  <form action={updateEnv} className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
+                    <input type="hidden" name="id" value={e.id} />
+                    <div className="flex-1 space-y-1">
+                      <Label>Name</Label>
+                      <Input name="name" defaultValue={e.name} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <Label>Key</Label>
+                      <Input name="key" defaultValue={e.key} />
+                    </div>
+                    <div className="self-end">
+                      <Button type="submit" className="h-10" variant="outline" disabled={saving}>
+                        Save
+                      </Button>
+                    </div>
+                    <div className="self-end">
+                      <Button
+                        type="button"
+                        className="h-10"
+                        variant="destructive"
+                        disabled={saving || isLastEnv}
+                        onClick={() => removeEnv(e.id)}
+                        title={isLastEnv ? 'Cannot delete the last environment' : 'Delete environment'}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Remove
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              );
+            })}
           </div>
         </div>
 

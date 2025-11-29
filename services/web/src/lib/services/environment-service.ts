@@ -47,7 +47,14 @@ export class EnvironmentService {
   }
 
   async deleteEnvironment(id: EnvironmentId): Promise<void> {
-    await this.getEnvironment(id);
+    const environment = await this.getEnvironment(id);
+
+    // Prevent deletion of the last environment
+    const allEnvs = await this.environmentRepo.findByProjectId(environment.projectId);
+    if (allEnvs.length <= 1) {
+      throw new Error('Cannot delete the last environment. A project must have at least one environment.');
+    }
+
     await this.environmentRepo.delete(id);
   }
 }

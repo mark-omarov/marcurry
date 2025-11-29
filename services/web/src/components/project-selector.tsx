@@ -2,29 +2,30 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Project } from '@marcurry/core';
 
-export function ProductSelector({
+export function ProjectSelector({
   products,
   isEnvironmentPage = false,
 }: {
-  products: Product[];
+  products: Project[];
   isEnvironmentPage?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentProductId = searchParams.get('productId') || '';
+  const currentProjectId = searchParams.get('projectId') || '';
 
-  const handleChange = (productId: string) => {
+  const handleChange = (projectId: string) => {
     const environmentsUrl = '/environments';
     const rootUrl = '/';
     const urlToUse = isEnvironmentPage ? environmentsUrl : rootUrl;
 
-    if (productId === 'all') {
+    if (projectId === 'all') {
       router.push(urlToUse);
       return;
     }
 
-    router.push(`${urlToUse}?productId=${productId}`);
+    router.push(`${urlToUse}?projectId=${projectId}`);
   };
 
   if (products.length === 0) {
@@ -33,18 +34,18 @@ export function ProductSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="product-select" className="text-sm font-medium">
-        Product:
+      <label htmlFor="project-select" className="text-sm font-medium">
+        Project:
       </label>
-      <Select value={currentProductId || 'all'} onValueChange={handleChange}>
-        <SelectTrigger id="product-select" className="w-[200px]">
-          <SelectValue placeholder="Select product" />
+      <Select value={currentProjectId || 'all'} onValueChange={handleChange}>
+        <SelectTrigger id="project-select" className="w-[200px]">
+          <SelectValue placeholder="Select project" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Products</SelectItem>
-          {products.map((product) => (
-            <SelectItem key={product.id} value={product.id}>
-              {product.name}
+          <SelectItem value="all">All Projects</SelectItem>
+          {products.map((project) => (
+            <SelectItem key={project.id} value={project.id}>
+              {project.name}
             </SelectItem>
           ))}
         </SelectContent>

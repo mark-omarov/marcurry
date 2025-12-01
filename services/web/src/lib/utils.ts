@@ -13,3 +13,12 @@ export async function tryCatch<T, E = Error>(promise: T | Promise<T>) {
     return [error as E, null] as const;
   }
 }
+
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}

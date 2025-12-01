@@ -26,19 +26,19 @@ export function validateGates<T>(gates: Gate<T>[]): void {
   }
 
   for (const gate of gates) {
-    if (gate.type === 'actors') {
-      if (!gate.actorIds || gate.actorIds.length === 0) {
-        throw new GateValidationError('Actors gate must have at least one actor ID');
-      }
+    if (gate.type !== 'actors') continue;
 
-      if (gate.actorIds.length > MAX_ACTOR_IDS_PER_GATE) {
-        throw new GateValidationError(`Actors gate cannot have more than ${MAX_ACTOR_IDS_PER_GATE} actor IDs`);
-      }
+    if (!gate.actorIds || gate.actorIds.length === 0) {
+      throw new GateValidationError('Actors gate must have at least one actor ID');
+    }
 
-      const uniqueActorIds = new Set(gate.actorIds);
-      if (uniqueActorIds.size !== gate.actorIds.length) {
-        throw new GateValidationError('Actors gate contains duplicate actor IDs');
-      }
+    if (gate.actorIds.length > MAX_ACTOR_IDS_PER_GATE) {
+      throw new GateValidationError(`Actors gate cannot have more than ${MAX_ACTOR_IDS_PER_GATE} actor IDs`);
+    }
+
+    const uniqueActorIds = new Set(gate.actorIds);
+    if (uniqueActorIds.size !== gate.actorIds.length) {
+      throw new GateValidationError('Actors gate contains duplicate actor IDs');
     }
   }
 }

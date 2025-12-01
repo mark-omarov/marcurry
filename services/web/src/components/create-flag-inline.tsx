@@ -19,15 +19,7 @@ import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Project, FlagValueType } from '@marcurry/core';
 import { createFlagAction } from '@/app/actions/flags';
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
+import { slugify } from '@/lib/utils';
 
 export function CreateFlagInline(props: { projectId?: string; envId?: string; products?: Project[] }) {
   const [open, setOpen] = useState(false);

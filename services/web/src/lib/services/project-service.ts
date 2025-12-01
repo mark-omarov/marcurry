@@ -26,7 +26,6 @@ export class ProjectService {
   }
 
   async updateProject(id: ProjectId, data: { name?: string }): Promise<Project> {
-    const existing = await this.getProject(id);
     return this.projectRepo.update(id, data);
   }
 

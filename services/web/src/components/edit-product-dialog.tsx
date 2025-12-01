@@ -25,15 +25,6 @@ import {
 } from '@/app/actions/environments';
 import type { Project, Environment } from '@marcurry/core';
 
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
-
 export function EditProductDialog({ product }: { product: Project }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);

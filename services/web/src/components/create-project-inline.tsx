@@ -19,15 +19,7 @@ import { createProjectAction } from '@/app/actions/projects';
 import { createEnvironmentAction } from '@/app/actions/environments';
 import { useToast } from '@/components/ui/toast';
 import { PlusCircle, Trash2 } from 'lucide-react';
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
+import { slugify } from '@/lib/utils';
 
 export function CreateProjectInline() {
   const [open, setOpen] = useState(false);
